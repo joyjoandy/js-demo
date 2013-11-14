@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="UTF-8">
-    <title>焦点轮播图</title>
+    <title>query焦点轮播图</title>
     <style type="text/css">
         *{ margin: 0; padding: 0; text-decoration: none;}
         body { padding: 20px;}
@@ -18,63 +18,46 @@
         #prev { left: 20px;}
         #next { right: 20px;}
     </style>
+    <script type="text/javascript" src="../lib/jquery.1.10.2.js"></script>
     <script type="text/javascript">
 
-        window.onload = function () {
-            var container = document.getElementById('container');
-            var list = document.getElementById('list');
-            var buttons = document.getElementById('buttons').getElementsByTagName('a');
-            var prev = document.getElementById('prev');
-            var next = document.getElementById('next');
+        $(function () {
+            var container = $('#container');
+            var list = $('#list');
+            var buttons = $('#buttons a');
+            var prev = $('#prev');
+            var next = $('#next');
             var index = 1;
             var len = 5;
-            var animated = false;
             var interval = 3000;
             var timer;
 
 
             function animate (offset) {
-                if (offset == 0) {
-                    return;
+                var left = parseInt(list.css('left')) + offset;
+                if (offset>0) {
+                    offset = '+=' + offset;
                 }
-                animated = true;
-                var time = 300;
-                var inteval = 10;
-                var speed = offset/(time/inteval);
-                var left = parseInt(list.style.left) + offset;
-
-                var go = function (){
-                    if ( (speed > 0 && parseInt(list.style.left) < left) || (speed < 0 && parseInt(list.style.left) > left)) {
-                        list.style.left = parseInt(list.style.left) + speed + 'px';
-                        setTimeout(go, inteval);
-                    }
-                    else {
-                        list.style.left = left + 'px';
-                        if(left>-200){
-                            list.style.left = -600 * len + 'px';
-                        }
-                        if(left<(-600 * len)) {
-                            list.style.left = '-600px';
-                        }
-                        animated = false;
-                    }
+                else {
+                    offset = '-=' + Math.abs(offset);
                 }
-                go();
+                list.animate({'left': offset}, 300, function () {
+                    if(left > -200){
+                        list.css('left', -600 * len);
+                    }
+                    if(left < (-600 * len)) {
+                        list.css('left', -600);
+                    }
+                });
             }
 
             function showButton() {
-                for (var i = 0; i < buttons.length ; i++) {
-                    if( buttons[i].className == 'on'){
-                        buttons[i].className = '';
-                        break;
-                    }
-                }
-                buttons[index - 1].className = 'on';
+                buttons.eq(index-1).addClass('on').siblings().removeClass('on');
             }
 
             function play() {
                 timer = setTimeout(function () {
-                    next.onclick();
+                    next.trigger('click');
                     play();
                 }, interval);
             }
@@ -82,8 +65,8 @@
                 clearTimeout(timer);
             }
 
-            next.onclick = function () {
-                if (animated) {
+            next.bind('click', function () {
+                if (list.is(':animated')) {
                     return;
                 }
                 if (index == 5) {
@@ -94,9 +77,10 @@
                 }
                 animate(-600);
                 showButton();
-            }
-            prev.onclick = function () {
-                if (animated) {
+            });
+
+            prev.bind('click', function () {
+                if (list.is(':animated')) {
                     return;
                 }
                 if (index == 1) {
@@ -107,31 +91,27 @@
                 }
                 animate(600);
                 showButton();
-            }
+            });
 
-            for (var i = 0; i < buttons.length; i++) {
-                buttons[i].onclick = function () {
-                    if (animated) {
-                        return;
-                    }
-                    if(this.className == 'on') {
-                        return;
-                    }
-                    var myIndex = parseInt(this.getAttribute('index'));
-                    var offset = -600 * (myIndex - index);
+            buttons.each(function () {
+                 $(this).bind('click', function () {
+                     if (list.is(':animated') || $(this).attr('class')=='on') {
+                         return;
+                     }
+                     var myIndex = parseInt(this.attr('index'));
+                     var offset = -600 * (myIndex - index);
 
-                    animate(offset);
-                    index = myIndex;
-                    showButton();
-                }
-            }
+                     animate(offset);
+                     index = myIndex;
+                     showButton();
+                 })
+            });
 
-            container.onmouseover = stop;
-            container.onmouseout = play;
+            container.hover(stop, play);
 
             play();
 
-        }
+        });
     </script>
 </head>
 <body>
